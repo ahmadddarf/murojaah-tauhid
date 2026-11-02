@@ -54,3 +54,6 @@ audio { width: 100%; }
 .pot.aktif { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
 .bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: .85rem; }
 .bar .muted { flex: 1; }
+.bar{flex-wrap:wrap}
+.bar button{padding:4px 8px;min-height:32px;font-size:.8rem}
+button.bahaya{color:#fff;background:#b3261e;border-color:#b3261e}

@@ -18,6 +18,7 @@ let S = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* storage diblokir: app tetap jalan */ } };
 
 let M = [];
+let EST = {};
 let cur = null;
 let putaran = 1;
 let ab = { a: null, b: null };
@@ -94,10 +95,12 @@ const render = {
     h += `<h3>Target setoran</h3><div class="baris"><select id="tb">${M.map((b) => `<option value="${b.id}" ${b.id === tgt.bab ? 'selected' : ''}>Bab ${pad(b.id)}</option>`).join('')}</select><input id="tt" type="date" value="${tgt.tanggal}"><button id="ts">Simpan</button></div>`;
     h += `<h3>Offline &amp; cadangan</h3><div class="baris"><button id="unduh">Unduh semua audio (±70 MB)</button><span id="us" class="muted"></span></div>`;
     h += `<div class="baris"><button id="eks">Ekspor data</button><button id="imp">Impor data</button><input id="impf" type="file" accept="application/json" hidden></div>`;
+    h += `<h3>Pengaturan</h3><div class="baris"><button id="reset" class="bahaya">Reset app</button><span class="muted">Hapus semua progres, riwayat, target, tanda blok, audio unduhan.</span></div>`;
     h += `<h3>Riwayat</h3>` + (S.riwayat.slice(-30).reverse().map((r) => `<div class="muted">${tglID(r.t)} · bab ${pad(r.bab)} · ${r.nilai}</div>`).join('') || '<p class="muted">Belum ada.</p>');
     $('#progres').innerHTML = h;
     $('#ts').onclick = () => { S.target = { bab: +$('#tb').value, tanggal: $('#tt').value }; save(); toast('Target disimpan'); };
     $('#unduh').onclick = unduhAudio;
+    $('#reset').onclick = resetApp;
     $('#eks').onclick = ekspor;
     $('#imp').onclick = () => $('#impf').click();
     $('#impf').onchange = impor;
@@ -123,8 +126,9 @@ function renderTeks() {
       : lv === 1 ? `${esc(w.slice(0, 3).join(' '))} <span class="tutup">${esc(w.slice(3).join(' '))}</span>`
       : `<span class="tutup">${esc(p.teks)}</span>`;
     if (!blok) return `<div class="pot">${isi}</div>`;
-    const w2 = S.waktu[cur]?.[p.n];
-    return `<div class="pot blok${aktif === p.n ? ' aktif buka' : ''}" data-n="${p.n}">${isi}<div class="bar" dir="ltr"><span class="muted">${w2 ? mnt(w2[0]) + '–' + mnt(w2[1]) : 'belum ditandai'}</span><button data-act="mulai">Mulai</button><button data-act="selesai">Selesai</button>${w2 ? '<button data-act="hapus">Hapus</button>' : ''}</div></div>`;
+    const r = rentang(p.n);
+    const man = !!S.waktu[cur]?.[p.n]?.[1];
+    return `<div class="pot blok${aktif === p.n ? ' aktif buka' : ''}" data-n="${p.n}">${isi}<div class="bar" dir="ltr"><span class="muted">${r ? mnt(r[0]) + '–' + mnt(r[1]) + (man ? '' : ' (perkiraan)') : 'belum ada waktu'}</span><button data-act="a-">Awal −</button><button data-act="a+">Awal +</button><button data-act="b-">Akhir −</button><button data-act="b+">Akhir +</button><button data-act="mulai">Mulai</button><button data-act="selesai">Selesai</button>${man ? '<button data-act="hapus">Reset</button>' : ''}</div></div>`;
   }).join('');
 }
 
@@ -136,32 +140,53 @@ function stopBlok() {
   $('#ab').textContent = 'Loop A';
 }
 
+const rentang = (n) => {
+  const m = S.waktu[cur]?.[n];
+  return m && m[1] != null ? m : EST[cur]?.[n - 1] ?? null;
+};
+
+function pasangLoop(n) {
+  const r = rentang(n);
+  aktif = n;
+  ab = { a: r[0], b: r[1] };
+  $('#ab').textContent = 'Hapus A–B';
+}
+
+function mulaiDi(t) {
+  if (au.readyState >= 1) au.currentTime = t;
+  else au.addEventListener('loadedmetadata', () => { au.currentTime = t; }, { once: true });
+}
+
 function klikBlok(e) {
   const el = e.target.closest('.pot');
   if (!el) return;
   const n = +el.dataset.n;
   const act = e.target.dataset.act;
   const w = (S.waktu[cur] ??= {});
-  if (act === 'mulai') {
-    w[n] = [au.currentTime, w[n] && w[n][1] > au.currentTime ? w[n][1] : null];
-    if (w[n][1] === null) toast('Mulai tersimpan. Tekan Selesai di akhir blok.');
-  } else if (act === 'selesai') {
-    if (!w[n] || au.currentTime <= w[n][0]) return toast('Tekan Mulai dulu (sebelum Selesai)');
-    w[n][1] = au.currentTime;
-  } else if (act === 'hapus') {
-    delete w[n];
-    if (aktif === n) stopBlok();
-  } else {
-    if (aktif === n) { stopBlok(); au.pause(); }
-    else if (w[n]?.[1] != null) {
-      aktif = n;
-      ab = { a: w[n][0], b: w[n][1] };
-      $('#ab').textContent = 'Hapus A–B';
-      au.currentTime = ab.a;
-      au.play();
-    } else return toast('Blok ini belum ditandai. Putar audio, tekan Mulai lalu Selesai.');
+  if (act) {
+    const r = rentang(n);
+    if (act === 'mulai') w[n] = [au.currentTime, r && r[1] > au.currentTime ? r[1] : null];
+    else if (act === 'selesai') {
+      if (!r || au.currentTime <= r[0]) return toast('Selesai harus setelah awal');
+      w[n] = [r[0], au.currentTime];
+    } else if (act === 'hapus') delete w[n];
+    else if (r) {
+      const d = act[1] === '+' ? 0.5 : -0.5;
+      w[n] = act[0] === 'a' ? [Math.max(0, r[0] + d), r[1]] : [r[0], Math.min(au.duration || r[1] + 1, r[1] + d)];
+      if (w[n][1] - w[n][0] < 0.5) return toast('Blok terlalu pendek');
+    }
+    if (aktif === n && rentang(n)) { pasangLoop(n); mulaiDi(ab.a); }
+    else if (aktif === n) stopBlok();
+    save();
+    renderTeks();
+    return;
   }
-  save();
+  if (aktif === n) { stopBlok(); au.pause(); }
+  else if (rentang(n)) {
+    pasangLoop(n);
+    mulaiDi(ab.a);
+    au.play().catch(() => toast('Audio belum bisa diputar. Tekan play sekali.'));
+  } else return toast('Waktu blok ini belum ada. Putar audio lalu tekan Mulai dan Selesai.');
   renderTeks();
 }
 
@@ -272,6 +297,14 @@ async function unduhAudio() {
   jumlahTersimpan();
 }
 
+async function resetApp() {
+  if (!confirm('Reset app? Semua progres, riwayat, target, tanda blok, dan audio unduhan akan dihapus. Ekspor data dulu kalau perlu.')) return;
+  try { localStorage.removeItem(KEY); } catch { /* abaikan */ }
+  try { for (const k of await caches.keys()) await caches.delete(k); } catch { /* abaikan */ }
+  try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); } catch { /* abaikan */ }
+  location.reload();
+}
+
 function ekspor() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' }));
@@ -303,6 +336,7 @@ $('#tema').onclick = () => {
 };
 
 tema();
-fetch('data/matan.json').then((r) => r.json()).then((d) => { M = d; tampil('hari'); })
+fetch('data/waktu.json').then((r) => r.json()).catch(() => ({}))
+  .then((w) => { EST = w; return fetch('data/matan.json'); }).then((r) => r.json()).then((d) => { M = d; tampil('hari'); })
   .catch(() => { $('#hari').textContent = 'Gagal memuat data/matan.json'; });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
