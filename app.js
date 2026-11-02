@@ -19,6 +19,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 
 let M = [];
 let EST = {};
+let TR = null;
 let cur = null;
 let putaran = 1;
 let ab = { a: null, b: null };
@@ -83,6 +84,7 @@ const render = {
   baca() {
     $('#level').textContent = 'Teks: ' + LEVEL[S.pengaturan.level];
     renderTeks();
+    renderTr();
     renderAksi();
   },
   progres() {
@@ -190,6 +192,17 @@ function klikBlok(e) {
   renderTeks();
 }
 
+async function renderTr() {
+  const el = $('#terjemah');
+  $('#tr').textContent = S.pengaturan.tr ? 'Terjemahan: tampil' : 'Terjemahan';
+  if (!S.pengaturan.tr || cur === null) { el.innerHTML = ''; return; }
+  if (!TR) TR = await fetch('data/terjemah.json').then((r) => r.json()).catch(() => ({}));
+  const p = TR[cur];
+  el.innerHTML = '<h3>Terjemahan</h3>' + (p?.length
+    ? p.map((t) => `<div class="kartu">${esc(t)}</div>`).join('') + '<p class="muted">Diambil dari PDF terjemahan dengan OCR, jadi mungkin ada salah ketik. Rujuk buku cetak untuk teks yang pasti.</p>'
+    : '<p class="muted">Terjemahan bab ini belum tersedia.</p>');
+}
+
 function renderAksi() {
   if (cur === null) { $('#aksi').innerHTML = ''; return; }
   const b = S.bab[cur];
@@ -223,7 +236,14 @@ au.addEventListener('ended', () => {
 });
 au.addEventListener('timeupdate', () => {
   if (ab.b !== null && au.currentTime >= ab.b) au.currentTime = ab.a;
+  $('#tn').textContent = mnt(au.currentTime);
+  if (au.duration && document.activeElement !== $('#sk')) $('#sk').value = (au.currentTime / au.duration) * 1000;
 });
+au.addEventListener('loadedmetadata', () => { $('#td').textContent = mnt(au.duration); });
+au.addEventListener('play', () => { $('#pp').textContent = '❚❚'; });
+au.addEventListener('pause', () => { $('#pp').textContent = '▶'; });
+$('#pp').onclick = () => (au.paused ? au.play().catch(() => toast('Audio belum bisa diputar')) : au.pause());
+$('#sk').oninput = (e) => { if (au.duration) au.currentTime = (e.target.value / 1000) * au.duration; };
 $('#ulang').onchange = () => { putaran = 1; hit(); };
 $('#kec').value = S.pengaturan.kecepatan;
 $('#kec').onchange = (e) => { S.pengaturan.kecepatan = au.playbackRate = +e.target.value; save(); };
@@ -250,6 +270,7 @@ $('#blok').onclick = () => {
   $('#blok').textContent = blok ? 'Mode blok: aktif' : 'Mode blok';
   renderTeks();
 };
+$('#tr').onclick = () => { S.pengaturan.tr = !S.pengaturan.tr; save(); renderTr(); };
 $('#teks').addEventListener('click', (e) => (blok ? klikBlok(e) : e.target.closest('.pot')?.classList.toggle('buka')));
 $('#aksi').addEventListener('click', (e) => {
   if (e.target.id === 'mulaiHafal') { S.bab[cur] = mulai(today()); save(); renderAksi(); return; }

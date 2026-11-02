@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Murojaah Tauhid</title>
-<meta name="theme-color" content="#1f5f4a">
+<meta name="theme-color" content="#5b5fe0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Murojaah Tauhid">
@@ -26,7 +26,8 @@
   </section>
   <section id="baca" hidden>
     <h2 id="judul" lang="ar" dir="rtl">Pilih bab dulu</h2>
-    <audio id="au" preload="metadata" controls></audio>
+    <audio id="au" preload="metadata"></audio>
+    <div id="pemutar"><button id="pp" aria-label="Putar atau jeda">▶</button><span id="tn">0:00</span><input id="sk" type="range" min="0" max="1000" value="0" aria-label="Posisi audio"><span id="td">0:00</span></div>
     <div class="baris">
       <button id="m5">−5 dtk</button>
       <button id="p5">+5 dtk</button>
@@ -43,8 +44,10 @@
       <button id="fb">A+</button>
       <button id="buka">Buka semua</button>
       <button id="blok">Mode blok</button>
+      <button id="tr">Terjemahan</button>
     </div>
     <div id="teks" lang="ar" dir="rtl"></div>
+    <div id="terjemah" lang="id" dir="ltr"></div>
     <div id="aksi"></div>
   </section>
   <section id="progres" hidden></section>

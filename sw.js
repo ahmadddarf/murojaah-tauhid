@@ -1,6 +1,6 @@
-const SHELL = 'shell-v3';
+const SHELL = 'shell-v4';
 const AUDIO = 'audio-v1';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'srs.js', 'manifest.json', 'data/matan.json', 'data/waktu.json',
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'srs.js', 'manifest.json', 'data/matan.json', 'data/waktu.json', 'data/terjemah.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   if (req.url.includes('/audio/')) return e.respondWith(audio(req));
   // jaringan dulu supaya update langsung terbaca; cache jadi cadangan offline
-  e.respondWith(fetch(req).then((r) => {
+  e.respondWith(fetch(req, { cache: 'no-cache' }).then((r) => {
     if (r.ok) { const copy = r.clone(); caches.open(SHELL).then((c) => c.put(req, copy)); }
     return r;
   }).catch(() => caches.match(req, { ignoreSearch: true })));
