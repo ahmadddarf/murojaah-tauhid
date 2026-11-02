@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Murojaah Tauhid</title>
+<meta name="theme-color" content="#1f5f4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Murojaah Tauhid">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Murojaah Kitab Tauhid</h1>
+  <button id="tema" aria-label="Ganti tema">◐</button>
+</header>
+<main>
+  <section id="hari"></section>
+  <section id="daftar" hidden>
+    <input id="cari" type="search" placeholder="Cari judul bab…" dir="rtl">
+    <div id="daftarIsi"></div>
+  </section>
+  <section id="baca" hidden>
+    <h2 id="judul" lang="ar" dir="rtl">Pilih bab dulu</h2>
+    <audio id="au" preload="metadata" controls></audio>
+    <div class="baris">
+      <button id="m5">−5 dtk</button>
+      <button id="p5">+5 dtk</button>
+      <button id="ab">Loop A</button>
+    </div>
+    <div class="baris">
+      <label>Ulang <select id="ulang"><option value="1">1×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option><option value="0">∞</option></select></label>
+      <span id="hit"></span>
+      <label>Kecepatan <select id="kec"><option>0.75</option><option>1</option><option>1.25</option><option>1.5</option></select></label>
+    </div>
+    <div class="baris">
+      <button id="level">Teks: tampil</button>
+      <button id="fk">A−</button>
+      <button id="fb">A+</button>
+      <button id="buka">Buka semua</button>
+      <button id="blok">Mode blok</button>
+    </div>
+    <div id="teks" lang="ar" dir="rtl"></div>
+    <div id="aksi"></div>
+  </section>
+  <section id="progres" hidden></section>
+</main>
+<div id="toast" role="status"></div>
+<nav>
+  <button data-tab="hari">Hari Ini</button>
+  <button data-tab="daftar">Bab</button>
+  <button data-tab="baca">Hafal</button>
+  <button data-tab="progres">Progres</button>
+</nav>
+<script type="module" src="app.js"></script>
+</body>
+</html>
