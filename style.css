@@ -63,4 +63,7 @@ button.bahaya{color:#fff;background:#b3261e;border-color:#b3261e}
 #pemutar input { flex: 1; min-width: 0; accent-color: var(--on-accent); background: none; box-shadow: none; padding: 0; }
 .bar { font-family: -apple-system, system-ui, sans-serif; direction: ltr; line-height: 1.4; }
 #baca { padding-bottom: 76px; }
-#terjemah .kartu { line-height: 1.6; }
+.tjbar { display: flex; margin-top: 6px; font-family: -apple-system, system-ui, sans-serif; }
+.tj { min-height: 32px; padding: 0 10px; font-size: .8rem; background: var(--bg); box-shadow: none; color: var(--accent); }
+.tjm { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font: 400 .95rem/1.65 -apple-system, system-ui, sans-serif; text-align: left; color: var(--ink); }
+.pot.tjon .tjm { display: block; }

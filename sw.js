@@ -1,4 +1,4 @@
-const SHELL = 'shell-v4';
+const SHELL = 'shell-v5';
 const AUDIO = 'audio-v1';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'srs.js', 'manifest.json', 'data/matan.json', 'data/waktu.json', 'data/terjemah.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];

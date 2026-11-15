@@ -19,7 +19,8 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 
 let M = [];
 let EST = {};
-let TR = null;
+let TR = {};
+let trBuka = new Set();
 let cur = null;
 let putaran = 1;
 let ab = { a: null, b: null };
@@ -84,7 +85,7 @@ const render = {
   baca() {
     $('#level').textContent = 'Teks: ' + LEVEL[S.pengaturan.level];
     renderTeks();
-    renderTr();
+    $('#tr').textContent = S.pengaturan.tr ? 'Terjemahan: semua' : 'Terjemahan';
     renderAksi();
   },
   progres() {
@@ -122,16 +123,20 @@ function renderTeks() {
   if (!b) { $('#teks').innerHTML = ''; return; }
   if (!b.potongan.length) { $('#teks').innerHTML = '<p class="muted" dir="ltr">Teks bab ini belum diisi. Audio tetap bisa dipakai.</p>'; return; }
   const lv = S.pengaturan.level;
-  $('#teks').innerHTML = b.potongan.map((p) => {
+  const tj = TR[cur] || [];
+  $('#teks').innerHTML = b.potongan.map((p, i) => {
     const w = p.teks.split(/\s+/);
     const isi = lv === 0 ? esc(p.teks)
       : lv === 1 ? `${esc(w.slice(0, 3).join(' '))} <span class="tutup">${esc(w.slice(3).join(' '))}</span>`
       : `<span class="tutup">${esc(p.teks)}</span>`;
-    if (!blok) return `<div class="pot">${isi}</div>`;
+    const on = S.pengaturan.tr || trBuka.has(p.n);
+    const terj = tj[i] ? `<div class="tjbar" dir="ltr"><button class="tj" data-tj>${on ? 'Sembunyikan terjemahan' : 'Terjemahan'}</button></div><div class="tjm" lang="id" dir="ltr">${esc(tj[i])}</div>` : '';
+    const cls = `pot${on ? ' tjon' : ''}`;
+    if (!blok) return `<div class="${cls}" data-n="${p.n}">${isi}${terj}</div>`;
     const r = rentang(p.n);
     const man = !!S.waktu[cur]?.[p.n]?.[1];
-    return `<div class="pot blok${aktif === p.n ? ' aktif buka' : ''}" data-n="${p.n}">${isi}<div class="bar" dir="ltr"><span class="muted">${r ? mnt(r[0]) + '–' + mnt(r[1]) + (man ? '' : ' (perkiraan)') : 'belum ada waktu'}</span><button data-act="a-">Awal −</button><button data-act="a+">Awal +</button><button data-act="b-">Akhir −</button><button data-act="b+">Akhir +</button><button data-act="mulai">Mulai</button><button data-act="selesai">Selesai</button>${man ? '<button data-act="hapus">Reset</button>' : ''}</div></div>`;
-  }).join('');
+    return `<div class="${cls} blok${aktif === p.n ? ' aktif buka' : ''}" data-n="${p.n}">${isi}${terj}<div class="bar" dir="ltr"><span class="muted">${r ? mnt(r[0]) + '–' + mnt(r[1]) + (man ? '' : ' (perkiraan)') : 'belum ada waktu'}</span><button data-act="a-">Awal −</button><button data-act="a+">Awal +</button><button data-act="b-">Akhir −</button><button data-act="b+">Akhir +</button><button data-act="mulai">Mulai</button><button data-act="selesai">Selesai</button>${man ? '<button data-act="hapus">Reset</button>' : ''}</div></div>`;
+  }).join('') + (tj.length ? '<p class="muted" dir="ltr" lang="id">Terjemahan dibuat AI dari teks matan di atas, bukan terjemahan resmi. Rujuk buku dan guru untuk kepastian.</p>' : '');
 }
 
 const mnt = (t) => `${Math.floor(t / 60)}:${pad(Math.floor(t % 60))}`;
@@ -192,17 +197,6 @@ function klikBlok(e) {
   renderTeks();
 }
 
-async function renderTr() {
-  const el = $('#terjemah');
-  $('#tr').textContent = S.pengaturan.tr ? 'Terjemahan: tampil' : 'Terjemahan';
-  if (!S.pengaturan.tr || cur === null) { el.innerHTML = ''; return; }
-  if (!TR) TR = await fetch('data/terjemah.json').then((r) => r.json()).catch(() => ({}));
-  const p = TR[cur];
-  el.innerHTML = '<h3>Terjemahan</h3>' + (p?.length
-    ? p.map((t) => `<div class="kartu">${esc(t)}</div>`).join('') + '<p class="muted">Diambil dari PDF terjemahan dengan OCR, jadi mungkin ada salah ketik. Rujuk buku cetak untuk teks yang pasti.</p>'
-    : '<p class="muted">Terjemahan bab ini belum tersedia.</p>');
-}
-
 function renderAksi() {
   if (cur === null) { $('#aksi').innerHTML = ''; return; }
   const b = S.bab[cur];
@@ -219,6 +213,7 @@ function bukaBab(id) {
   putaran = 1;
   ab = { a: null, b: null };
   aktif = null;
+  trBuka.clear();
   $('#ab').textContent = 'Loop A';
   hit();
   $('#judul').textContent = `${pad(id)}. ${b.judul}`;
@@ -270,8 +265,26 @@ $('#blok').onclick = () => {
   $('#blok').textContent = blok ? 'Mode blok: aktif' : 'Mode blok';
   renderTeks();
 };
-$('#tr').onclick = () => { S.pengaturan.tr = !S.pengaturan.tr; save(); renderTr(); };
-$('#teks').addEventListener('click', (e) => (blok ? klikBlok(e) : e.target.closest('.pot')?.classList.toggle('buka')));
+$('#tr').onclick = () => {
+  S.pengaturan.tr = !S.pengaturan.tr;
+  trBuka.clear();
+  save();
+  render.baca();
+};
+$('#teks').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tj]');
+  if (t) {
+    const pot = t.closest('.pot');
+    const n = +pot.dataset.n;
+    const on = pot.classList.toggle('tjon');
+    if (on) trBuka.add(n); else trBuka.delete(n);
+    t.textContent = on ? 'Sembunyikan terjemahan' : 'Terjemahan';
+    return;
+  }
+  if (e.target.closest('.tjm')) return;
+  if (blok) klikBlok(e);
+  else e.target.closest('.pot')?.classList.toggle('buka');
+});
 $('#aksi').addEventListener('click', (e) => {
   if (e.target.id === 'mulaiHafal') { S.bab[cur] = mulai(today()); save(); renderAksi(); return; }
   const n = e.target.dataset.n;
@@ -357,7 +370,8 @@ $('#tema').onclick = () => {
 };
 
 tema();
-fetch('data/waktu.json').then((r) => r.json()).catch(() => ({}))
+fetch('data/terjemah.json').then((r) => r.json()).catch(() => ({}))
+  .then((t) => { TR = t; return fetch('data/waktu.json'); }).then((r) => r.json()).catch(() => ({}))
   .then((w) => { EST = w; return fetch('data/matan.json'); }).then((r) => r.json()).then((d) => { M = d; tampil('hari'); })
   .catch(() => { $('#hari').textContent = 'Gagal memuat data/matan.json'; });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
