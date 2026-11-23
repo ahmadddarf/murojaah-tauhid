@@ -21,7 +21,10 @@
 <main>
   <section id="hari"></section>
   <section id="daftar" hidden>
-    <input id="cari" type="search" placeholder="Cari judul bab…" dir="rtl">
+    <div class="atas">
+      <select id="lompat" aria-label="Lompat ke bab"><option value="">Lompat ke bab…</option></select>
+      <input id="cari" type="search" placeholder="Cari nomor atau judul (Arab/Indonesia)…" dir="auto" autocomplete="off">
+    </div>
     <div id="daftarIsi"></div>
   </section>
   <section id="baca" hidden>

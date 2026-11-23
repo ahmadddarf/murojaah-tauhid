@@ -21,6 +21,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 let M = [];
 let EST = {};
 let TR = {};
+let JI = [];
 let trBuka = new Set();
 let cur = null;
 let putaran = 1;
@@ -44,7 +45,12 @@ function tema() {
 }
 
 const item = (id, meta = '', cls = '') =>
-  `<button class="bab ${cls}" data-bab="${id}"><span class="no">${pad(id)}</span><span class="jdl" lang="ar" dir="rtl">${esc(M[id].judul)}</span><span class="meta">${meta}</span></button>`;
+  `<button class="bab ${cls}" data-bab="${id}"><span class="no">${pad(id)}</span><span class="tk"><span class="jdl" lang="ar" dir="rtl">${esc(M[id].judul)}</span>${JI[id] ? `<span class="jid">${esc(JI[id])}</span>` : ''}</span><span class="meta">${meta}</span></button>`;
+
+// Angka: nomor persis atau awalan (5 -> 05, 50-59). Teks: judul Arab atau Indonesia.
+const cocok = (b, q) => (/^\d+$/.test(q)
+  ? b.id === +q || pad(b.id).startsWith(q)
+  : b.judul.includes(q) || (JI[b.id] || '').toLowerCase().includes(q.toLowerCase()));
 
 const tglID = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
@@ -81,8 +87,11 @@ const render = {
   daftar() {
     const t = today();
     const q = $('#cari').value.trim();
-    $('#daftarIsi').innerHTML = M.filter((b) => !q || b.judul.includes(q) || pad(b.id).includes(q))
-      .map((b) => item(b.id, `${Math.round(b.durasi / 6) / 10} mnt · ${infoJadwal(b.id, t)}`)).join('');
+    const l = $('#lompat');
+    if (l.options.length < 2) l.innerHTML = '<option value="">Lompat ke bab…</option>' + M.map((b) => `<option value="${b.id}">${pad(b.id)} · ${esc(JI[b.id] || b.judul)}</option>`).join('');
+    const hasil = M.filter((b) => !q || cocok(b, q));
+    $('#daftarIsi').innerHTML = hasil.map((b) => item(b.id, `${Math.round(b.durasi / 6) / 10} mnt · ${infoJadwal(b.id, t)}`)).join('')
+      || '<p class="muted">Tidak ada bab yang cocok.</p>';
   },
   baca() {
     $('#baca').classList.toggle('kosong', cur === null);
@@ -370,6 +379,7 @@ document.addEventListener('click', (e) => {
   if (b) bukaBab(+b.dataset.bab);
 });
 $('#cari').oninput = render.daftar;
+$('#lompat').onchange = (e) => { const v = e.target.value; e.target.value = ''; if (v !== '') bukaBab(+v); };
 $('#tema').onclick = () => {
   const o = ['auto', 'terang', 'gelap'];
   S.pengaturan.gelap = o[(o.indexOf(S.pengaturan.gelap) + 1) % 3];
@@ -381,9 +391,10 @@ const ambil = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(`${u} sta
 Promise.all([
   ambil('data/terjemah.json').catch(() => ({})),
   ambil('data/waktu.json').catch(() => ({})),
+  ambil('data/judul-id.json').catch(() => []),
   // coba sekali lagi dengan URL unik kalau respons pertama rusak (cache basi di iOS)
   ambil('data/matan.json').catch(() => ambil('data/matan.json?r=' + Date.now())),
-]).then(([t, w, m]) => { TR = t; EST = w; M = m; tampil('hari'); })
+]).then(([t, w, ji, m]) => { TR = t; EST = w; JI = ji; M = m; tampil('hari'); })
   .catch((e) => {
     $('#hari').innerHTML = `<div class="kartu">Gagal memuat data.<br><span class="muted">${esc(e && e.message || e)}</span>
       <div class="baris"><button class="utama" id="cobaLagi">Coba lagi</button><button id="bersih">Bersihkan cache &amp; muat ulang</button></div>

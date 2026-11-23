@@ -1,6 +1,6 @@
-const SHELL = 'shell-v8';
+const SHELL = 'shell-v9';
 const AUDIO = 'audio-v1';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'warna.js', 'srs.js', 'manifest.json', 'data/matan.json', 'data/waktu.json', 'data/terjemah.json',
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'warna.js', 'srs.js', 'manifest.json', 'data/matan.json', 'data/waktu.json', 'data/terjemah.json', 'data/judul-id.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

@@ -87,3 +87,10 @@ button[aria-pressed=true] { background: var(--accent); color: var(--on-accent); 
 #alat summary::-webkit-details-marker { display: none; }
 #alat summary::before { content: '▸'; transition: transform .15s; }
 #alat[open] summary::before { transform: rotate(90deg); }
+
+/* tab Bab: picker + cari menempel di atas */
+.atas { position: sticky; top: 0; z-index: 3; background: var(--bg); padding: 8px 0 4px; display: grid; gap: 8px; }
+.atas input[type=search] { margin: 0; }
+#lompat { width: 100%; font-weight: 600; color: var(--accent); }
+.bab .tk { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.bab .jid { font-size: .8rem; color: var(--muted); direction: ltr; text-align: left; line-height: 1.3; }
