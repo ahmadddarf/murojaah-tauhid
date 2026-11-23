@@ -67,3 +67,13 @@ button.bahaya{color:#fff;background:#b3261e;border-color:#b3261e}
 .tj { min-height: 32px; padding: 0 10px; font-size: .8rem; background: var(--bg); box-shadow: none; color: var(--accent); }
 .tjm { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font: 400 .95rem/1.65 -apple-system, system-ui, sans-serif; text-align: left; color: var(--ink); }
 .pot.tjon .tjm { display: block; }
+
+/* mode warna: tiap blok punya warna tepi sendiri, ayat dan hadits diwarnai */
+.pot.w0 { --c: #e5484d; } .pot.w1 { --c: #f08c00; } .pot.w2 { --c: #2f9e44; }
+.pot.w3 { --c: #1c7ed6; } .pot.w4 { --c: #ae3ec9; } .pot.w5 { --c: #0ca678; }
+.pot[class*=" w"] { border-right: 6px solid var(--c); background: color-mix(in srgb, var(--c) 8%, var(--card)); }
+.ay { color: #2b8a3e; }
+.hd { color: #c2410c; }
+.legenda { font: .8rem -apple-system, system-ui, sans-serif; margin: 4px 0; color: var(--muted, inherit); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ay { color: #69db7c; } :root:not([data-theme="light"]) .hd { color: #ffa94d; } }
+:root[data-theme="dark"] .ay { color: #69db7c; } :root[data-theme="dark"] .hd { color: #ffa94d; }
