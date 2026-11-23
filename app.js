@@ -377,8 +377,22 @@ $('#tema').onclick = () => {
 };
 
 tema();
-fetch('data/terjemah.json').then((r) => r.json()).catch(() => ({}))
-  .then((t) => { TR = t; return fetch('data/waktu.json'); }).then((r) => r.json()).catch(() => ({}))
-  .then((w) => { EST = w; return fetch('data/matan.json'); }).then((r) => r.json()).then((d) => { M = d; tampil('hari'); })
-  .catch(() => { $('#hari').textContent = 'Gagal memuat data/matan.json'; });
+const ambil = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(`${u} status ${r.status}`); return r.json(); });
+Promise.all([
+  ambil('data/terjemah.json').catch(() => ({})),
+  ambil('data/waktu.json').catch(() => ({})),
+  // coba sekali lagi dengan URL unik kalau respons pertama rusak (cache basi di iOS)
+  ambil('data/matan.json').catch(() => ambil('data/matan.json?r=' + Date.now())),
+]).then(([t, w, m]) => { TR = t; EST = w; M = m; tampil('hari'); })
+  .catch((e) => {
+    $('#hari').innerHTML = `<div class="kartu">Gagal memuat data.<br><span class="muted">${esc(e && e.message || e)}</span>
+      <div class="baris"><button class="utama" id="cobaLagi">Coba lagi</button><button id="bersih">Bersihkan cache &amp; muat ulang</button></div>
+      <p class="muted">Progres hafalan dan audio unduhan tidak ikut terhapus.</p></div>`;
+    $('#cobaLagi').onclick = () => location.reload();
+    $('#bersih').onclick = async () => {
+      try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); } catch { /* abaikan */ }
+      try { for (const k of await caches.keys()) if (k.startsWith('shell-')) await caches.delete(k); } catch { /* abaikan */ }
+      location.reload();
+    };
+  });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
