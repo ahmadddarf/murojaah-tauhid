@@ -68,12 +68,22 @@ button.bahaya{color:#fff;background:#b3261e;border-color:#b3261e}
 .tjm { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font: 400 .95rem/1.65 -apple-system, system-ui, sans-serif; text-align: left; color: var(--ink); }
 .pot.tjon .tjm { display: block; }
 
-/* mode warna: tiap blok punya warna tepi sendiri, ayat dan hadits diwarnai */
-.pot.w0 { --c: #e5484d; } .pot.w1 { --c: #f08c00; } .pot.w2 { --c: #2f9e44; }
-.pot.w3 { --c: #1c7ed6; } .pot.w4 { --c: #ae3ec9; } .pot.w5 { --c: #0ca678; }
-.pot[class*=" w"] { border-right: 6px solid var(--c); background: color-mix(in srgb, var(--c) 8%, var(--card)); }
-.ay { color: #2b8a3e; }
-.hd { color: #c2410c; }
-.legenda { font: .8rem -apple-system, system-ui, sans-serif; margin: 4px 0; color: var(--muted, inherit); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ay { color: #69db7c; } :root:not([data-theme="light"]) .hd { color: #ffa94d; } }
-:root[data-theme="dark"] .ay { color: #69db7c; } :root[data-theme="dark"] .hd { color: #ffa94d; }
+/* mode warna: warna font berganti tiap frasa (3 warna) sebagai jangkar ingatan */
+.k1 { color: #1864ab; }
+.k2 { color: #c92a2a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .k1 { color: #74c0fc; } :root:not([data-theme="light"]) .k2 { color: #ff8787; } }
+:root[data-theme="dark"] .k1 { color: #74c0fc; } :root[data-theme="dark"] .k2 { color: #ff8787; }
+
+button[aria-pressed=true] { background: var(--accent); color: var(--on-accent); }
+.mode button { flex: 1 1 auto; }
+#alat { margin: 4px 0 8px; }
+#alat summary { min-height: 44px; display: flex; align-items: center; gap: 6px; list-style: none; color: var(--muted); font-size: .9rem; cursor: pointer; }
+#kosongMsg { display: none; }
+#baca.kosong #kosongMsg { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+#baca.kosong :is(.mode, #alat, #pemutar, #judul) { display: none; }
+.bar button { min-height: 44px; }
+.tj { min-height: 40px; }
+.lanjut { width: 100%; margin-top: 12px; color: var(--accent); font-weight: 600; }
+#alat summary::-webkit-details-marker { display: none; }
+#alat summary::before { content: '▸'; transition: transform .15s; }
+#alat[open] summary::before { transform: rotate(90deg); }

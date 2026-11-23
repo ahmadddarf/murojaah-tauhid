@@ -28,25 +28,29 @@
     <h2 id="judul" lang="ar" dir="rtl">Pilih bab dulu</h2>
     <audio id="au" preload="metadata"></audio>
     <div id="pemutar"><button id="pp" aria-label="Putar atau jeda">▶</button><span id="tn">0:00</span><input id="sk" type="range" min="0" max="1000" value="0" aria-label="Posisi audio"><span id="td">0:00</span></div>
-    <div class="baris">
-      <button id="m5">−5 dtk</button>
-      <button id="p5">+5 dtk</button>
-      <button id="ab">Loop A</button>
-    </div>
-    <div class="baris">
-      <label>Ulang <select id="ulang"><option value="1">1×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option><option value="0">∞</option></select></label>
-      <span id="hit"></span>
-      <label>Kecepatan <select id="kec"><option>0.75</option><option>1</option><option>1.25</option><option>1.5</option></select></label>
-    </div>
-    <div class="baris">
+    <p id="kosongMsg" class="kartu">Belum ada bab yang dibuka. <button class="utama" data-tab="daftar">Pilih bab</button></p>
+    <div class="baris mode">
       <button id="level">Teks: tampil</button>
-      <button id="fk">A−</button>
-      <button id="fb">A+</button>
       <button id="buka">Buka semua</button>
-      <button id="blok">Mode blok</button>
-      <button id="tr">Terjemahan</button>
-      <button id="warna">Warna</button>
+      <button id="warna" aria-pressed="false">Warna</button>
+      <button id="tr" aria-pressed="false">Terjemahan</button>
+      <button id="blok" aria-pressed="false">Mode blok</button>
     </div>
+    <details id="alat">
+      <summary>Alat audio &amp; ukuran huruf</summary>
+      <div class="baris">
+        <button id="m5">−5 dtk</button>
+        <button id="p5">+5 dtk</button>
+        <button id="ab">Loop A</button>
+        <button id="fk" aria-label="Perkecil huruf">A−</button>
+        <button id="fb" aria-label="Perbesar huruf">A+</button>
+      </div>
+      <div class="baris">
+        <label>Ulang <select id="ulang"><option value="1">1×</option><option value="3">3×</option><option value="5">5×</option><option value="10">10×</option><option value="0">∞</option></select></label>
+        <span id="hit"></span>
+        <label>Kecepatan <select id="kec"><option>0.75</option><option>1</option><option>1.25</option><option>1.5</option></select></label>
+      </div>
+    </details>
     <div id="teks" lang="ar" dir="rtl"></div>
     <div id="aksi"></div>
   </section>

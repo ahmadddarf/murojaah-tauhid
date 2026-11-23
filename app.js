@@ -1,4 +1,5 @@
 import { today, mulai, nilai, status, jatuhTempo, streak, daysBetween } from './srs.js';
+import { susun } from './warna.js';
 
 const KEY = 'murojaah-v1';
 const AUDIO_CACHE = 'audio-v1';
@@ -67,6 +68,7 @@ const render = {
       h += `<br>Setoran bab ${pad(S.target.bab)}: ${d >= 0 ? d + ' hari lagi' : 'terlewat ' + -d + ' hari'}`;
     }
     h += '</div>';
+    if (!Object.keys(S.bab).length) h += '<div class="kartu muted">Cara pakai: buka bab di bawah, dengarkan dan baca, lalu tekan <b>Mulai hafal bab ini</b>. Setelah murojaah, beri nilai Lupa, Ragu, atau Lancar. App menjadwalkan murojaah berikutnya.</div>';
     h += `<h3>Murojaah (${due.length})</h3>`;
     if (due.length) {
       h += `<button class="utama" id="mm" style="width:100%">Mulai murojaah (teks disembunyikan)</button>`;
@@ -83,10 +85,13 @@ const render = {
       .map((b) => item(b.id, `${Math.round(b.durasi / 6) / 10} mnt · ${infoJadwal(b.id, t)}`)).join('');
   },
   baca() {
+    $('#baca').classList.toggle('kosong', cur === null);
     $('#level').textContent = 'Teks: ' + LEVEL[S.pengaturan.level];
+    $('#buka').hidden = S.pengaturan.level === 0;
+    $('#tr').setAttribute('aria-pressed', !!S.pengaturan.tr);
+    $('#warna').setAttribute('aria-pressed', !!S.pengaturan.warna);
+    $('#blok').setAttribute('aria-pressed', blok);
     renderTeks();
-    $('#tr').textContent = S.pengaturan.tr ? 'Terjemahan: semua' : 'Terjemahan';
-    $('#warna').textContent = S.pengaturan.warna ? 'Warna: aktif' : 'Warna';
     renderAksi();
   },
   progres() {
@@ -125,31 +130,17 @@ function renderTeks() {
   if (!b.potongan.length) { $('#teks').innerHTML = '<p class="muted" dir="ltr">Teks bab ini belum diisi. Audio tetap bisa dipakai.</p>'; return; }
   const lv = S.pengaturan.level;
   const tj = TR[cur] || [];
-  const wr = S.pengaturan.warna;
-  $('#teks').innerHTML = (wr ? '<p class="legenda" dir="ltr"><span class="ay">■ ayat</span> · <span class="hd">■ hadits</span> · warna tepi = urutan blok</p>' : '') + b.potongan.map((p, i) => {
-    const w = p.teks.split(/\s+/);
-    const st = {};
-    const f = wr ? (x) => warnai(x, st) : esc;
-    const isi = lv === 0 ? f(p.teks)
-      : lv === 1 ? `${f(w.slice(0, 3).join(' '))} <span class="tutup">${f(w.slice(3).join(' '))}</span>`
-      : `<span class="tutup">${f(p.teks)}</span>`;
+  const st = { k: 0 };
+  $('#teks').innerHTML = b.potongan.map((p, i) => {
+    const isi = susun(p.teks, lv, S.pengaturan.warna, st, esc);
     const on = S.pengaturan.tr || trBuka.has(p.n);
     const terj = tj[i] ? `<div class="tjbar" dir="ltr"><button class="tj" data-tj>${on ? 'Sembunyikan terjemahan' : 'Terjemahan'}</button></div><div class="tjm" lang="id" dir="ltr">${esc(tj[i])}</div>` : '';
-    const cls = `pot${on ? ' tjon' : ''}${wr ? ' w' + (i % 6) : ''}`;
+    const cls = `pot${on ? ' tjon' : ''}`;
     if (!blok) return `<div class="${cls}" data-n="${p.n}">${isi}${terj}</div>`;
     const r = rentang(p.n);
     const man = !!S.waktu[cur]?.[p.n]?.[1];
     return `<div class="${cls} blok${aktif === p.n ? ' aktif buka' : ''}" data-n="${p.n}">${isi}${terj}<div class="bar" dir="ltr"><span class="muted">${r ? mnt(r[0]) + '–' + mnt(r[1]) + (man ? '' : ' (perkiraan)') : 'belum ada waktu'}</span><button data-act="a-">Awal −</button><button data-act="a+">Awal +</button><button data-act="b-">Akhir −</button><button data-act="b+">Akhir +</button><button data-act="mulai">Mulai</button><button data-act="selesai">Selesai</button>${man ? '<button data-act="hapus">Reset</button>' : ''}</div></div>`;
   }).join('') + (tj.length ? '<p class="muted" dir="ltr" lang="id">Terjemahan dibuat AI dari teks matan di atas, bukan terjemahan resmi. Rujuk buku dan guru untuk kepastian.</p>' : '');
-}
-
-// Mode warna: ayat ﴿﴾ dan hadits «» diberi warna; st membawa status kurung lintas potongan teks (level awal kalimat).
-function warnai(s, st) {
-  return s.split(/([﴿﴾«»])/).map((x) => {
-    if (x === '﴿' || x === '«') { st.in = x === '﴿' ? 'ay' : 'hd'; return `<span class="${st.in}">${x}</span>`; }
-    if (x === '﴾' || x === '»') { const r = `<span class="${st.in || ''}">${x}</span>`; st.in = null; return r; }
-    return st.in && x ? `<span class="${st.in}">${esc(x)}</span>` : esc(x);
-  }).join('');
 }
 
 const mnt = (t) => `${Math.floor(t / 60)}:${pad(Math.floor(t % 60))}`;
@@ -213,9 +204,11 @@ function klikBlok(e) {
 function renderAksi() {
   if (cur === null) { $('#aksi').innerHTML = ''; return; }
   const b = S.bab[cur];
-  $('#aksi').innerHTML = b
+  const lain = jatuhTempo(S.bab, today()).filter((x) => x !== cur);
+  $('#aksi').innerHTML = (b
     ? `<p class="muted">Nilai murojaah kamu:</p><div class="nilai"><button data-n="lupa">Lupa</button><button data-n="ragu">Ragu</button><button data-n="lancar" class="utama">Lancar</button></div><p class="muted">Kotak ${b.kotak} · ${infoJadwal(cur, today())}</p>`
-    : `<button class="utama" id="mulaiHafal" style="width:100%">Mulai hafal bab ini</button>`;
+    : `<button class="utama" id="mulaiHafal" style="width:100%">Mulai hafal bab ini</button>`)
+    + (lain.length ? `<button class="lanjut" data-bab="${lain[0]}">Lanjut murojaah: bab ${pad(lain[0])} (${lain.length} tersisa) ›</button>` : '');
 }
 
 function bukaBab(id) {
@@ -275,10 +268,10 @@ $('#buka').onclick = () => {
 $('#blok').onclick = () => {
   blok = !blok;
   stopBlok();
-  $('#blok').textContent = blok ? 'Mode blok: aktif' : 'Mode blok';
+  $('#blok').setAttribute('aria-pressed', blok);
   renderTeks();
 };
-$('#warna').onclick = () => { S.pengaturan.warna = !S.pengaturan.warna; save(); render.baca(); };
+$('#warna').onclick = () => { S.pengaturan.warna = !S.pengaturan.warna; save(); render.baca(); if (S.pengaturan.warna) toast('Warna font berganti tiap frasa: ingat kalimat lewat warnanya'); };
 $('#tr').onclick = () => {
   S.pengaturan.tr = !S.pengaturan.tr;
   trBuka.clear();
